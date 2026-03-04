@@ -115,6 +115,16 @@
   --container-padding: var(--sp-6);
 }
 
+/* Desktop Preview: make corners clean and angular */
+@media (min-width: 1024px) {
+  body.preview-root {
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+  }
+}
+
 /* Dark Mode helpers: keep tokens stable, but adjust surfaces */
 .dark {
   --c-surface: rgba(17, 17, 24, 0.45);
