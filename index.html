@@ -12541,10 +12541,17 @@ Bei Fragen wenden Sie sich an Ihren Webdesigner.
           if (this.initialized) return;
 
           document.addEventListener("keydown", (e) => {
-            // Don't trigger shortcuts when typing in inputs
+            if (e.defaultPrevented) {
+              return;
+            }
+
+            // Don't trigger shortcuts when typing in editable controls
+            const target = e.target;
             if (
-              e.target.tagName === "INPUT" ||
-              e.target.tagName === "TEXTAREA"
+              target.tagName === "INPUT" ||
+              target.tagName === "TEXTAREA" ||
+              target.tagName === "SELECT" ||
+              target.isContentEditable
             ) {
               return;
             }
