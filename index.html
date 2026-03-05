@@ -17828,14 +17828,14 @@ Bei Fragen wenden Sie sich an Ihren Webdesigner.
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="${escapeHtml(settings.siteDescription)}">
   <title>${escapeHtml(settings.siteName)}</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${settings.faviconEmoji || "🏢"}</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${escapeHtml(settings.faviconEmoji || "🏢")}</text></svg>">
   <style>
 ${tokensCSS}
 
 ${componentsCSS}
   </style>
 </head>
-<body data-style="${settings.stylePreset || "signature"}" data-density="${settings.designDensity || "balanced"}" class="${fxClasses.join(" ")}">
+<body data-style="${escapeHtml(settings.stylePreset || "signature")}" data-density="${escapeHtml(settings.designDensity || "balanced")}" class="${fxClasses.join(" ")}">
   <a href="#main" class="preview-skip-link">Zum Inhalt springen</a>
 ${grainOverlay}
 ${bodyHTML}
