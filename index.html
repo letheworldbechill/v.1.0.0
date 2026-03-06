@@ -7191,6 +7191,24 @@
         },
       };
 
+      // Produktfokus: reduzierte Template-Auswahl
+      const templateWhitelist = [
+        "schweizer_kmu",
+        "treuhand",
+        "anwalt",
+        "handwerker",
+        "arzt",
+        "restaurant",
+        "immobilien",
+        "coiffeur",
+        "it",
+      ];
+      industryTemplates = Object.fromEntries(
+        Object.entries(industryTemplates).filter(([key]) =>
+          templateWhitelist.includes(key),
+        ),
+      );
+
       // ============================================
       // DEFAULT COMPONENTS
       // ============================================
@@ -7600,6 +7618,7 @@
         faviconEmoji: "🏢",
 
         // Multi-Page
+        pagePackage: "onepage", // onepage | 3page | 5page
         generateImpressum: false,
         generateDatenschutz: false,
 
@@ -11360,6 +11379,115 @@ ${items}
 </html>`;
       }
 
+      function getPagePackageCount(settings) {
+        const pkg = settings?.pagePackage || "onepage";
+        if (pkg === "3page") return 3;
+        if (pkg === "5page") return 5;
+        return 1;
+      }
+
+      function generateSubPageHTML({ settings, title, bodyContent }) {
+        return `<!DOCTYPE html>
+<html lang="de"${settings.darkMode ? ' class="dark"' : ""}>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="${esc(settings.siteDescription || "Professionelle Dienstleistungen für Ihr Unternehmen.")}">
+  <title>${esc(title)} – ${esc(settings.siteName)}</title>
+  ${generateFontLinksHTML(settings)}
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body data-style="${esc(settings.stylePreset || "signature")}" data-density="${esc(settings.designDensity || "balanced")}">
+  <a href="#main" class="skip-link">Zum Inhalt springen</a>
+  <main id="main">
+${bodyContent}
+  </main>
+  <script src="js/main.js"><${"/"}script>
+</body>
+</html>`;
+      }
+
+      function generateMultiPageFiles(components, settings) {
+        const pages = [];
+        const c = components || {};
+        const packageCount = getPagePackageCount(settings);
+
+        if (packageCount >= 3) {
+          pages.push({
+            filename: "leistungen.html",
+            title: "Leistungen",
+            bodyContent: [
+              c.header ? generateHeaderHTML(c.header.data || {}, settings) : "",
+              c.services
+                ? generateServicesHTML(c.services.data || {}, settings)
+                : "",
+              c.process ? generateProcessHTML(c.process.data || {}, settings) : "",
+              c.benefits
+                ? generateBenefitsHTML(c.benefits.data || {}, settings)
+                : "",
+              c.cta ? generateCtaHTML(c.cta.data || {}, settings) : "",
+              c.footer ? generateFooterHTML(c.footer.data || {}, settings) : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+
+          pages.push({
+            filename: "ueber-uns.html",
+            title: "Über uns",
+            bodyContent: [
+              c.header ? generateHeaderHTML(c.header.data || {}, settings) : "",
+              c.hero ? generateHeroHTML(c.hero.data || {}, settings) : "",
+              c.team ? generateTeamHTML(c.team.data || {}, settings) : "",
+              c.testimonials
+                ? generateTestimonialsHTML(c.testimonials.data || {}, settings)
+                : "",
+              c.footer ? generateFooterHTML(c.footer.data || {}, settings) : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+        }
+
+        if (packageCount >= 5) {
+          pages.push({
+            filename: "kontakt.html",
+            title: "Kontakt",
+            bodyContent: [
+              c.header ? generateHeaderHTML(c.header.data || {}, settings) : "",
+              c.cta ? generateCtaHTML(c.cta.data || {}, settings) : "",
+              c.faq ? generateFaqHTML(c.faq.data || {}, settings) : "",
+              c.footer ? generateFooterHTML(c.footer.data || {}, settings) : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+
+          pages.push({
+            filename: "faq.html",
+            title: "FAQ",
+            bodyContent: [
+              c.header ? generateHeaderHTML(c.header.data || {}, settings) : "",
+              c.faq ? generateFaqHTML(c.faq.data || {}, settings) : "",
+              c.cta ? generateCtaHTML(c.cta.data || {}, settings) : "",
+              c.footer ? generateFooterHTML(c.footer.data || {}, settings) : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+        }
+
+        return pages.map((p) => ({
+          filename: p.filename,
+          html: generateSubPageHTML({
+            settings,
+            title: p.title,
+            bodyContent: p.bodyContent,
+          }),
+        }));
+      }
+
       // ============================================
       // HELPER: Escape HTML
       // ============================================
@@ -11639,6 +11767,15 @@ ${items}
         // Add HTML files
         folder.file("index.html", indexHTML);
 
+        // Add optional multipage files (3-page / 5-page package)
+        const multiPageFiles = generateMultiPageFiles(
+          safeComponents,
+          safeSettings,
+        );
+        multiPageFiles.forEach((page) => {
+          folder.file(page.filename, page.html);
+        });
+
         // Add Impressum if enabled
         if (safeSettings.generateImpressum) {
           const impressumHTML = generateImpressumHTML(safeSettings);
@@ -11673,7 +11810,11 @@ ${items}
         );
 
         // Add README
-        const readme = generateReadme(safeSettings, assets?.files?.length || 0);
+        const readme = generateReadme(
+          safeSettings,
+          assets?.files?.length || 0,
+          multiPageFiles,
+        );
         folder.file("readme.txt", readme);
 
         // Generate ZIP blob
@@ -11693,7 +11834,7 @@ ${items}
       /**
        * Generate README file
        */
-      function generateReadme(settings, assetsCount = 0) {
+      function generateReadme(settings, assetsCount = 0, multiPageFiles = []) {
         const date = new Date().toLocaleDateString("de-CH", {
           year: "numeric",
           month: "long",
@@ -11703,6 +11844,18 @@ ${items}
         const assetsLine = assetsCount
           ? `/assets/             - Exportierte Bilder (${assetsCount} Datei(en))\n`
           : "";
+        const pagePkg = settings?.pagePackage || "onepage";
+        const pagePkgLabel =
+          pagePkg === "5page"
+            ? "5-Seiten-Paket"
+            : pagePkg === "3page"
+              ? "3-Seiten-Paket"
+              : "Onepager";
+        const extraPagesLine = multiPageFiles.length
+          ? `${multiPageFiles
+              .map((p) => `/${p.filename}`.padEnd(20, " ") + "- Zusatzseite")
+              .join("\n")}\n`
+          : "";
 
         return `================================================
 ${settings.siteName || "Website"}
@@ -11710,15 +11863,20 @@ ${settings.siteName || "Website"}
 
 Erstellt am: ${date}
 Generator: Smooth Builder Pro v4.4.0 + Treuhand Studio
+Seitenpaket: ${pagePkgLabel}
 
 DATEISTRUKTUR
 -------------
 /index.html          - Startseite
+/leistungen.html     - Zusatzseite (ab 3-Seiten-Paket)
+/ueber-uns.html      - Zusatzseite (ab 3-Seiten-Paket)
+/kontakt.html        - Zusatzseite (nur 5-Seiten-Paket)
+/faq.html            - Zusatzseite (nur 5-Seiten-Paket)
 /impressum.html      - Impressum (falls aktiviert)
 /datenschutz.html    - Datenschutz (falls aktiviert)
 /offerte-generator.html - Offerte Tool (standalone)
 /backup.json         - Projekt-Backup (Import/Restore)
-${assetsLine}/css/tokens.css      - Design Tokens (Farben, Abstände, etc.)
+${extraPagesLine}${assetsLine}/css/tokens.css      - Design Tokens (Farben, Abstände, etc.)
 /css/components.css  - Komponenten-Styles
 /js/main.js          - JavaScript (Menü, Scroll, Consent)
 
@@ -16419,6 +16577,17 @@ Bei Fragen wenden Sie sich an Ihren Webdesigner.
             >
               Zusätzliche Seiten
             </h4>
+            <EditorSelect
+              label="Seitenpaket"
+              value={settings.pagePackage || "onepage"}
+              onChange={(v) => onUpdate({ ...settings, pagePackage: v })}
+              options={[
+                { value: "onepage", label: "Onepager" },
+                { value: "3page", label: "3 Seiten (inkl. Leistungen & Über uns)" },
+                { value: "5page", label: "5 Seiten (inkl. Kontakt & FAQ)" },
+              ]}
+            />
+            <div style={{ height: 8 }} />
             <EditorCheckbox
               label="Impressum generieren"
               checked={settings.generateImpressum}
