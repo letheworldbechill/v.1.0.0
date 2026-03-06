@@ -11737,12 +11737,19 @@ ${bodyContent}
               const ctx = canvas.getContext("2d");
               ctx.drawImage(img, 0, 0, width, height);
 
-              // Small PNGs keep transparency, everything else → JPEG
+              // Prefer WebP for smaller files; fall back to JPEG if unsupported
               let dataUrl;
               if (file.type === "image/png" && file.size < 50000) {
+                // Small PNGs: keep transparency as-is
                 dataUrl = canvas.toDataURL("image/png");
               } else {
-                dataUrl = canvas.toDataURL("image/jpeg", quality);
+                const webpUrl = canvas.toDataURL("image/webp", quality);
+                // Browser returns a PNG data-URL when the format is unsupported
+                if (webpUrl.startsWith("data:image/webp")) {
+                  dataUrl = webpUrl;
+                } else {
+                  dataUrl = canvas.toDataURL("image/jpeg", quality);
+                }
               }
 
               const sizeKB = Math.round((dataUrl.length * 3) / 4 / 1024);
