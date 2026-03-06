@@ -1,0 +1,19 @@
+:root {
+  --primary: #1e3a5f;
+  --accent: #ca8a04;
+
+  --bg: #fbfbfc;
+  --bg-alt: #f4f6f8;
+
+  --text: #0b1220;
+  --text-light: rgba(11, 18, 32, 0.78);
+
+  --radius: 12px;
+
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 32px;
+  --space-lg: 64px;
+
+  --container: 1200px;
+}

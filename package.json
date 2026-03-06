@@ -1,0 +1,9 @@
+{
+  "name": "smooth-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quality gates and tests for Smooth Builder",
+  "scripts": {
+    "test": "node --test tests/unit/**/*.test.js"
+  }
+}
