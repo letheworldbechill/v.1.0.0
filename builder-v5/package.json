@@ -1,0 +1,27 @@
+{
+  "name": "smooth-builder-v5",
+  "version": "5.0.0",
+  "description": "Single-Surface Website Builder - Schwizer Quality System Compliant",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "audit:routes": "grep -r 'Route\\|path:' src/ | wc -l",
+    "audit:hover": "grep -r ':hover' src/ | grep -v '@media (hover: hover)' | wc -l",
+    "audit:modal": "grep -ri 'modal\\|dialog\\|overlay' src/components/ | wc -l",
+    "audit:forbidden": "grep -ri 'hamburger\\|dropdown\\|tab-bar\\|context-menu' src/ | wc -l"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^7.3.1"
+  }
+}
